@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     ALGORITHM: str = 'HS256'
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     CORS_ORIGINS: List[str] = ['http://localhost', 'http://localhost:8000']
+    RATE_LIMIT_ENABLED: bool = True
+    DEFAULT_RATE_LIMIT: str = '100/minute'
+    AUTH_RATE_LIMIT: str = '10/minute'
+    ORDERS_RATE_LIMIT: str = '30/minute'
 
     class Config:
         env_file = '.env'

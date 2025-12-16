@@ -1,6 +1,7 @@
 from db.session import get_session
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_limiter.depends import RateLimiter
 from repos.user_repo import UserRepository
 from schemas.user import Token, UserCreate
 from services.user_service import UserService
@@ -18,7 +19,11 @@ async def register(payload: UserCreate, db: AsyncSession = Depends(get_session))
     return {'id': user_db.id, 'email': user_db.email}
 
 
-@router.post('/token', response_model=Token)
+@router.post(
+    '/token',
+    response_model=Token,
+    dependencies=[Depends(RateLimiter(times=10, seconds=60))]
+)
 async def token(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session)):
     """Аутентификация пользователя по паролю. При успехе вернуть JWT access token."""
     repo = UserRepository(db)

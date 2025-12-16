@@ -1,13 +1,14 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
 from contextlib import asynccontextmanager
 
-from routers import auth, orders
+import redis.asyncio as redis
+from cache.redis import redis_client
 from core.config import settings
 from db.session import async_init_db
-from cache.redis import redis_client
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi_limiter import FastAPILimiter
 from messaging.producer import MessagingProducer
+from routers import auth, orders
 
 
 @asynccontextmanager
@@ -22,18 +23,25 @@ async def lifespan(app: FastAPI):
     await async_init_db()
     await redis_client.init()
     await MessagingProducer.connect(settings.RABBITMQ_URL)
+    if settings.RATE_LIMIT_ENABLED:
+        rate_redis = await redis.from_url(
+            settings.REDIS_URL,
+            encoding='utf-8',
+            decode_responses=True
+        )
+        await FastAPILimiter.init(rate_redis)
     yield
     await redis_client.close()
     await MessagingProducer.close()
 
-app = FastAPI(title="Order Service", lifespan=lifespan)
+app = FastAPI(title='Order Service', lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=['*'],
+    allow_headers=['*'],
 )
 
-app.include_router(auth.router, prefix="", tags=["auth"])
-app.include_router(orders.router, prefix="/orders", tags=["orders"])
+app.include_router(auth.router, prefix='', tags=['auth'])
+app.include_router(orders.router, prefix='/orders', tags=['orders'])
