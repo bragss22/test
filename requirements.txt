@@ -1,0 +1,25 @@
+fastapi
+uvicorn[standard]
+sqlalchemy==2
+asyncpg
+alembic
+pydantic
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+python-jose[cryptography]==3.3.0
+redis>=5.0.0
+aio-pika
+celery[redis]
+aiofiles
+python-dotenv
+pydantic-settings>=2.0.0
+email-validator>=2.0.0
+python-multipart>=0.0.6
+
+# Тестирование
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+httpx>=0.25.0
+asgi-lifespan==2.1.0
+aiosqlite>=0.19.0

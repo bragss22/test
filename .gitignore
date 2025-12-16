@@ -1,0 +1,12 @@
+.env
+pgdata
+logs
+.idea
+.pytest_cache
+__pycache__
+.DS_Store
+venv
+postgres-data
+postgres-data/pgdata
+celerybeat-schedule.db
+redisdata

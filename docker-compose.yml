@@ -1,0 +1,79 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: orders
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U app -d orders" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine  # Обновите до 7
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    ports: ["6379:6379"]
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine  # Более лёгкий образ
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s  # Даём 30 секунд на первоначальный запуск
+    ports: ["5672:5672", "15672:15672"]
+
+  web:
+    build: .
+    command: >
+      sh -c "echo 'Ожидание RabbitMQ...' && 
+             sleep 10 && 
+             echo 'Запуск приложения...' && 
+             uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes: ["./app:/app"]
+    ports: ["8000:8000"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://app:secret@postgres:5432/orders
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+
+  worker:
+    build: .
+    command: >
+      sh -c "echo 'Ожидание RabbitMQ для Celery...' && 
+             sleep 15 && 
+             echo 'Запуск Celery worker...' && 
+             celery -A tasks.worker.celery_app worker --loglevel=info --queues=orders "
+    volumes: ["./app:/app"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://app:secret@postgres:5432/orders
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+
+volumes:
+  pgdata:
