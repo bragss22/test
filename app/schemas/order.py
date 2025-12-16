@@ -1,8 +1,9 @@
-from pydantic import BaseModel
-from typing import List, Any, Optional
-from uuid import UUID
 from datetime import datetime
+from typing import Any, List
+from uuid import UUID
+
 from models.order import OrderStatus
+from pydantic import BaseModel, ConfigDict
 
 
 class OrderCreate(BaseModel):
@@ -18,8 +19,7 @@ class OrderOut(BaseModel):
     status: OrderStatus
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OrderUpdate(BaseModel):
