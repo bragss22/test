@@ -12,7 +12,7 @@ http://localhost:8000/docs
 ## Запуск тестов из корня проекта
 - sh run_tests.sh
 
-## В ручках убрал в конце слеш
+## Убрал в конце ручек слеш
 - /register/ -> /register
 - /orders/{order_id}/ -> /orders/{order_id}
 - и тд
