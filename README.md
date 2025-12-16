@@ -1,16 +1,18 @@
-Краткое описание проекта Order Service (FastAPI) с чистой архитектурой.
-Запуск: использовать docker-compose.yml (Postgres, Redis, RabbitMQ).
-- docker-compose up
+Краткое описание проекта для запуска
+## Запуск:
+- использовать docker-compose.yml (Postgres, Redis, RabbitMQ).
+- docker-compose up или docker-compose up -d
 
-Swagger
+## Swagger
 http://localhost:8000/docs
 
-Требования: посмотреть requirements.txt.
+## Требования:
+- посмотреть requirements.txt.
 
-Запуск тестов из корня проекта
+## Запуск тестов из корня проекта
 - sh run_tests.sh
 
-В ручках убрал в конце слеш
+## В ручках убрал в конце слеш
 - /register/ -> /register
 - /orders/{order_id}/ -> /orders/{order_id}
 - и тд
