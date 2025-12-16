@@ -3,13 +3,13 @@ services:
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: orders
+      POSTGRES_USER: ${DB_USERNAME:-app}
+      POSTGRES_PASSWORD: ${DB_PASS:-secret}
+      POSTGRES_DB: ${DB_NAME:-orders}
     ports: ["5432:5432"]
     volumes: ["pgdata:/var/lib/postgresql/data"]
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U app -d orders" ]
+      test: [ "CMD-SHELL", "pg_isready -U app -d ${DB_NAME}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -26,8 +26,8 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine  # Более лёгкий образ
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
     healthcheck:
       test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
       interval: 10s
@@ -39,11 +39,13 @@ services:
   web:
     build: .
     command: >
-      sh -c "echo 'Ожидание RabbitMQ...' && 
-             sleep 10 && 
-             echo 'Запуск приложения...' && 
+      sh -c "echo 'Ожидание RabbitMQ...' &&
+             sleep 10 &&
+             echo 'Запуск приложения...' &&
              uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
-    volumes: ["./app:/app"]
+    volumes:
+      - ./app:/app
+      - ./.env:/app/.env:ro
     ports: ["8000:8000"]
     depends_on:
       postgres:
@@ -53,27 +55,29 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql+asyncpg://app:secret@postgres:5432/orders
+      - DATABASE_URL=postgresql+asyncpg://${DB_USERNAME:-app}:${DB_PASS:-secret}@postgres:5432/${DB_NAME:-orders}
       - REDIS_URL=redis://redis:6379/0
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
 
   worker:
     build: .
     command: >
-      sh -c "echo 'Ожидание RabbitMQ для Celery...' && 
-             sleep 15 && 
-             echo 'Запуск Celery worker...' && 
+      sh -c "echo 'Ожидание RabbitMQ для Celery...' &&
+             sleep 15 &&
+             echo 'Запуск Celery worker...' &&
              celery -A tasks.worker.celery_app worker --loglevel=info --queues=orders "
-    volumes: ["./app:/app"]
+    volumes:
+      - ./app:/app
+      - ./.env:/app/.env:ro
     depends_on:
       rabbitmq:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql+asyncpg://app:secret@postgres:5432/orders
+      - DATABASE_URL=postgresql+asyncpg://${DB_USERNAME:-app}:${DB_PASS:-secret}@postgres:5432/${DB_NAME:-orders}
       - REDIS_URL=redis://redis:6379/0
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
 
 volumes:
   pgdata:
