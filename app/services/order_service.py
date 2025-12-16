@@ -1,12 +1,14 @@
-from messaging.producer import MessagingProducer
-from repos.order_repo import OrderRepository
-from models.order import Order
-from schemas.order import OrderCreate
 import logging
-from cache.redis import redis_client
 from uuid import UUID
 
+from cache.redis import redis_client
+from messaging.producer import MessagingProducer
+from models.order import Order
+from repos.order_repo import OrderRepository
+from schemas.order import OrderCreate
+
 logger = logging.getLogger(__name__)
+
 
 class OrderService:
     def __init__(self, repo: OrderRepository):
@@ -17,21 +19,20 @@ class OrderService:
         """Создать заказ в БД, опубликовать событие о новом заказе и положить заказ в кэш."""
         order = Order(user_id=user_id, items=payload.items, total_price=payload.total_price)
         order = await self.repo.create(order)
-        order = await self.repo.create(order)
         order_data = {
-            "order_id": str(order.id),
-            "user_id": user_id,
-            "items": payload.items,
-            "total_price": payload.total_price,
-            "status": "pending"
+            'order_id': str(order.id),
+            'user_id': user_id,
+            'items': payload.items,
+            'total_price': payload.total_price,
+            'status': 'pending'
         }
 
         try:
             # Используем producer
-            await MessagingProducer.publish(routing_key="orders", message=order_data)
+            await MessagingProducer.publish(routing_key='orders', message=order_data)
             logger.info(f"Сообщение отправлено в очередь 'orders': {order_data['order_id']}")
         except Exception as e:
-            logger.error(f"Ошибка отправки в RabbitMQ: {e}")
+            logger.error(f'Ошибка отправки в RabbitMQ: {e}')
 
         await redis_client.set_order(order)
         return order
