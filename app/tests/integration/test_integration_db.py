@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 
 
@@ -5,17 +7,22 @@ import pytest
 async def test_register_token_and_order_flow(async_client, db_session):
     """Полный сценарий: регистрация, получение токена, создание заказа."""
     # Регистрация
+    unique_id = uuid.uuid4().hex[:8]
+    test_email = f'test_{unique_id}@example.com'
+
+    # Регистрация
     register_data = {
-        'email': 'integration@test.local',
+        'email': test_email,
         'password': 'password123'
     }
 
     response = await async_client.post('/register', json=register_data)
+    print(response.text)
     assert response.status_code == 201
 
     # Получение токена
     login_data = {
-        'username': 'integration@test.local',
+        'username': test_email,
         'password': 'password123'
     }
 
