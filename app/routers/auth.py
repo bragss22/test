@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter()
 
 
-@router.post('/register/', status_code=201)
+@router.post('/register', status_code=201)
 async def register(payload: UserCreate, db: AsyncSession = Depends(get_session)):
     """Зарегистрировать нового пользователя."""
     repo = UserRepository(db)
@@ -18,7 +18,7 @@ async def register(payload: UserCreate, db: AsyncSession = Depends(get_session))
     return {'id': user_db.id, 'email': user_db.email}
 
 
-@router.post('/token/', response_model=Token)
+@router.post('/token', response_model=Token)
 async def token(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session)):
     """Аутентификация пользователя по паролю. При успехе вернуть JWT access token."""
     repo = UserRepository(db)
