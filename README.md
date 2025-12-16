@@ -9,3 +9,8 @@ http://localhost:8000/docs
 
 Запуск тестов из корня проекта
 - sh run_tests.sh
+
+В ручках убрал в конце слеш
+- /register/ -> /register
+- /orders/{order_id}/ -> /orders/{order_id}
+- и тд
